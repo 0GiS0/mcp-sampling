@@ -1,0 +1,22 @@
+{
+  "name": "mcp-low-level-server-streamable-http",
+  "author": "Gisela Torres",
+  "version": "0.1.0",
+  "description": "A low-level server implementation using the Model Context Protocol (MCP) with streamable HTTP support.",
+  "private": true,
+  "type": "module",  
+  "scripts": {
+    "start": "node build/index.js",
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.13.2",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.7",
+    "typescript": "^5.3.3"
+  }
+}
