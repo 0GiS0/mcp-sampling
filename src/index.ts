@@ -1,20 +1,13 @@
 /**
- * 📝 MCP (Model Context Protocol) Sample Server
+ * 📝 MCP (Model Context Protocol) usando Low-Level Server
  * 
- * Este archivo implementa un servidor didáctico usando el Model Context Protocol (MCP) 
- * para gestionar notas de texto. Utiliza la Low-Level API del SDK MCP y Express.js 
- * para exponer endpoints HTTP que permiten listar, leer, crear y resumir notas.
+ * Este ejemplo muestra cómo implementar un servidor MCP
+ * utilizando el Low-Level Server de Model Context Protocol (MCP).
+ * El objetivo principal es demostrar cómo funciona el Sampling.
  * 
- * Características principales:
- * - Almacenamiento en memoria de notas (sin base de datos).
- * - Exposición de recursos (notas) vía MCP.
- * - Herramienta para crear nuevas notas.
- * - Prompt para resumir todas las notas.
- * - Manejo de sesiones MCP vía HTTP (POST, GET, DELETE).
- * 
- * Ideal para aprender cómo funciona MCP y cómo integrar recursos, herramientas y prompts.
  */
-
+import express, { Request, Response } from "express";
+import * as dotenv from "dotenv";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
@@ -28,20 +21,30 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 import { randomUUID } from "node:crypto";
-import express, { Request, Response } from "express";
+
+dotenv.config();
+import { google } from "googleapis";
+
+// Configura las credenciales de la API de YouTube
+if (!process.env.YOUTUBE_API_KEY) {
+  throw new Error("YOUTUBE_API_KEY environment variable is not set");
+}
+
+const youtube = google.youtube({
+  version: "v3",
+  auth: process.env.YOUTUBE_API_KEY,
+});
 
 /**
- * Tipo para una nota.
+ * Tipo para un video de YouTube.
  */
-type Note = { title: string; content: string };
+type YouTubeVideo = { title: string; description: string, url: string };
 
 /**
- * Almacenamiento en memoria de notas.
+ * Almacenamiento en memoria de videos de YouTube.
  * En una app real, esto sería una base de datos.
  */
-const notes: { [id: string]: Note } = {
-  "1": { title: "First Note", content: "This is note 1" },
-  "2": { title: "Second Note", content: "This is note 2" },
+const videos: { [id: string]: YouTubeVideo } = {
 };
 
 // 🚀 Inicializa la app Express
@@ -72,11 +75,14 @@ const server = new Server(
  */
 server.setRequestHandler(ListResourcesRequestSchema, async () => {
   return {
-    resources: Object.entries(notes).map(([id, note]) => ({
-      uri: `note:///${id}`,
+    resources: Object.entries(videos).map(([id, video]) => ({
+      uri: `video:///${id}`,
       mimeType: "text/plain",
-      name: note.title,
-      description: `A text note: ${note.title}`,
+      name: video.title,
+      description: video.description,
+      metadata: {
+        url: video.url,
+      },
     })),
   };
 });
@@ -87,10 +93,10 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
 server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   const url = new URL(request.params.uri);
   const id = url.pathname.replace(/^\//, "");
-  const note = notes[id];
+  const video = videos[id];
 
-  if (!note) {
-    throw new Error(`Note ${id} not found`);
+  if (!video) {
+    throw new Error(`Video ${id} not found`);
   }
 
   return {
@@ -98,7 +104,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       {
         uri: request.params.uri,
         mimeType: "text/plain",
-        text: note.content,
+        text: video.description,
       },
     ],
   };
@@ -110,50 +116,93 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      // {
+      //   name: "create_note",
+      //   description: "Create a new note",
+      //   inputSchema: {
+      //     type: "object",
+      //     properties: {
+      //       title: {
+      //         type: "string",
+      //         description: "Title of the note",
+      //       },
+      //       content: {
+      //         type: "string",
+      //         description: "Text content of the note",
+      //       },
+      //     },
+      //     required: ["title", "content"],
+      //   },
+      // },
       {
-        name: "create_note",
-        description: "Create a new note",
+        name: "search_videos",
+        description: "Search for YouTube videos",
         inputSchema: {
           type: "object",
           properties: {
-            title: {
+            query: {
               type: "string",
-              description: "Title of the note",
-            },
-            content: {
-              type: "string",
-              description: "Text content of the note",
+              description: "Search query",
             },
           },
-          required: ["title", "content"],
+          required: ["query"],
         },
-      },
+      }
     ],
   };
 });
 
 /**
- * 📝 Handler para la herramienta "create_note".
+ * 📝 Handler para la herramienta "search_videos".
  */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   switch (request.params.name) {
-    case "create_note": {
-      const title = String(request.params.arguments?.title);
-      const content = String(request.params.arguments?.content);
-      if (!title || !content) {
-        throw new Error("Title and content are required");
+    case "search_videos": {
+      const query = String(request.params.arguments?.query);
+      if (!query) {
+        throw new Error("Query is required");
       }
 
-      const id = String(Object.keys(notes).length + 1);
-      notes[id] = { title, content };
+      console.log(`🔍 Buscando videos de YouTube con query: ${query}`)
+
+      const res = await youtube.search.list({
+        part: ['snippet'],
+        q: query,
+        type: ['video'],
+        maxResults: 5,
+        order: 'relevance',
+      }, {});
+
+      console.table(
+        res.data.items?.map((item) => ({
+          Title: item.snippet?.title,
+          Description: item.snippet?.description,
+          Thumbnail: item.snippet?.thumbnails?.default?.url,
+          Channel: item.snippet?.channelTitle,
+          PublishedAt: item.snippet?.publishedAt,
+        }))
+      );
+
+      let formattedResults = "";
+      res.data.items?.forEach((item) => {
+        formattedResults += `\n\n**Title:** ${item.snippet?.title}\n\n`;
+        formattedResults += `**Description:** ${item.snippet?.description}\n\n`;
+        formattedResults += `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n\n`;
+        formattedResults += `**Channel:** ${item.snippet?.channelTitle}\n\n`;
+        formattedResults += `**Published At:** ${item.snippet?.publishedAt}\n\n`;
+        formattedResults += `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n\n`;
+      });
+
 
       return {
         content: [
           {
             type: "text",
-            text: `Created note ${id}: ${title}`,
-          },
-        ],
+            text: formattedResults.length > 0
+              ? `# Search results for "${query}"\n\n${formattedResults}`
+              : `No results found for "${query}". Please try a different query.`,
+          }
+        ]
       };
     }
 
@@ -184,12 +233,12 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
     throw new Error("Unknown prompt");
   }
 
-  const embeddedNotes = Object.entries(notes).map(([id, note]) => ({
+  const embeddedVideos = Object.entries(videos).map(([id, video]) => ({
     type: "resource" as const,
     resource: {
-      uri: `note:///${id}`,
+      uri: `video:///${id}`,
       mimeType: "text/plain",
-      text: note.content,
+      text: video.title,
     },
   }));
 
@@ -202,9 +251,9 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
           text: "Please summarize the following notes:",
         },
       },
-      ...embeddedNotes.map((note) => ({
+      ...embeddedVideos.map((video) => ({
         role: "user" as const,
-        content: note,
+        content: video,
       })),
       {
         role: "user",

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "A low-level server implementation using the Model Context Protocol (MCP) with streamable HTTP support.",
   "private": true,
-  "type": "module",  
+  "type": "module",
   "scripts": {
     "start": "node build/index.js",
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.13.2",
-    "express": "^5.1.0"
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0",
+    "googleapis": "^150.0.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
