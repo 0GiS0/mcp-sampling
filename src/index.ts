@@ -116,24 +116,6 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
-      // {
-      //   name: "create_note",
-      //   description: "Create a new note",
-      //   inputSchema: {
-      //     type: "object",
-      //     properties: {
-      //       title: {
-      //         type: "string",
-      //         description: "Title of the note",
-      //       },
-      //       content: {
-      //         type: "string",
-      //         description: "Text content of the note",
-      //       },
-      //     },
-      //     required: ["title", "content"],
-      //   },
-      // },
       {
         name: "search_videos",
         description: "Search for YouTube videos",
@@ -183,15 +165,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }))
       );
 
+      // Sampling call
       let formattedResults = "";
-      res.data.items?.forEach((item) => {
-        formattedResults += `\n\n**Title:** ${item.snippet?.title}\n\n`;
-        formattedResults += `**Description:** ${item.snippet?.description}\n\n`;
-        formattedResults += `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n\n`;
-        formattedResults += `**Channel:** ${item.snippet?.channelTitle}\n\n`;
-        formattedResults += `**Published At:** ${item.snippet?.publishedAt}\n\n`;
-        formattedResults += `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n\n`;
+      let response = await server.createMessage({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Puedes formatear los resultados de la búsqueda de YouTube para la consulta "${query}"? Estos son los resultados:\n\n` +
+                res.data.items?.map((item) => {
+                  return `**Title:** ${item.snippet?.title}\n` +
+                    `**Description:** ${item.snippet?.description}\n` +
+                    `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n` +
+                    `**Channel:** ${item.snippet?.channelTitle}\n` +
+                    `**Published At:** ${item.snippet?.publishedAt}\n` +
+                    `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n`;
+                }).join("\n\n"),
+            },
+          },
+        ],
+        systemPrompt:
+          "Eres un asistente experto en formatear resultados de búsqueda de YouTube. Tu tarea es presentar los resultados de manera clara y concisa.",
+        maxTokens: 100,
+        temperature: 0.1,
+        includeContext: "none",
       });
+
+      if (response?.content?.type === "text") {
+        formattedResults = response.content.text;
+      } else {
+        throw new Error("Unexpected response format");
+      }
+
+      console.log("📜 Resultados formateados:", formattedResults);
+      console.log("🧠 Modelo usado:", response.model);
+
+      // let formattedResults = "";
+      // res.data.items?.forEach((item) => {
+      //   formattedResults += `\n\n**Title:** ${item.snippet?.title}\n\n`;
+      //   formattedResults += `**Description:** ${item.snippet?.description}\n\n`;
+      //   formattedResults += `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n\n`;
+      //   formattedResults += `**Channel:** ${item.snippet?.channelTitle}\n\n`;
+      //   formattedResults += `**Published At:** ${item.snippet?.publishedAt}\n\n`;
+      //   formattedResults += `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n\n`;
+      // });
 
 
       return {
