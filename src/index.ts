@@ -166,66 +166,37 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       // Sampling call
       let formattedResults = "";
-
-      // let response = await server.createMessage({
-      //   messages: [
-      //     {
-      //       role: "user",
-      //       content: {
-      //         type: "text",
-      //         text: `Puedes formatear los resultados de la búsqueda de YouTube para la consulta "${query}"? Estos son los resultados:\n\n` +
-      //           res.data.items?.map((item) => {
-      //             return `**Title:** ${item.snippet?.title}\n` +
-      //               `**Description:** ${item.snippet?.description}\n` +
-      //               `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n` +
-      //               `**Channel:** ${item.snippet?.channelTitle}\n` +
-      //               `**Published At:** ${item.snippet?.publishedAt}\n` +
-      //               `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n`;
-      //           }).join("\n\n"),
-      //       },
-      //     },
-      //   ],
-      //   systemPrompt:
-      //     "Eres un asistente experto en formatear resultados de búsqueda de YouTube. Tu tarea es presentar los resultados de manera clara y concisa. Añade emoji a cada uno de los puntos clave para hacerlos más atractivos. Asegúrate de que el formato sea fácil de leer y entender.",
-      //   maxTokens: 100,
-      //   temperature: 0.7,
-      //   includeContext: "thisServer", // Incluye el contexto del servidor actual
-      //   modelPreferences: {
-      //     speedPriority: 1
-      //   }
-
-      // });
-
+    
       console.log("🧠 Ok, llamando a un modelo de los que me permita el cliente para consultar a un LLM por el mejor vídeo");
 
-      try {
+      // try {
 
         let response = await server.createMessage({
           messages: [
             {
               role: "user",
               content: {
-                type: "text",
-                text: `Puedes elegir el mejor resultado para la consulta "${query}"? Estos son los resultados:\n\n` +
-                  res.data.items?.map((item) => {
-                    return `**Title:** ${item.snippet?.title}\n` +
-                      `**Description:** ${item.snippet?.description}\n` +
-                      `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n` +
-                      `**Channel:** ${item.snippet?.channelTitle}\n` +
-                      `**Published At:** ${item.snippet?.publishedAt}\n` +
-                      `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n`;
-                  }).join("\n\n"),
-              },
+          type: "text",
+          text: `Can you choose the best result for the query "${query}"? Here are the results:\n\n` +
+            res.data.items?.map((item) => {
+              return `**Title:** ${item.snippet?.title}\n` +
+                `**Description:** ${item.snippet?.description}\n` +
+                `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n` +
+                `**Channel:** ${item.snippet?.channelTitle}\n` +
+                `**Published At:** ${item.snippet?.publishedAt}\n` +
+                `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n`;
+              }).join("\n\n"),
             },
+          },
           ],
           systemPrompt:
-            `Eres un asistente experto en elegir el mejor resultado de búsqueda de YouTube. 
-          Tu tarea es seleccionar el resultado más relevante y presentarlo de manera clara y concisa. 
-          Añade emoji a cada uno de los puntos clave para hacerlos más atractivos. 
-          Asegúrate de que el formato sea fácil de leer y entender.`,
+          `You are an expert assistant at choosing the best YouTube search result.
+          Your task is to select the most relevant result and present it clearly and concisely.
+          Add emojis to each key point to make them more engaging.
+          Make sure the format is easy to read and understand.`,
           maxTokens: 100,
           temperature: 0.7,
-          includeContext: "none", // Incluye el contexto del servidor actual
+          includeContext: "none", // Include the current server context
           modelPreferences: {
             speedPriority: 1,
             costPriority: 1
@@ -239,22 +210,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         console.log("📜 Resultados formateados:", response.content.text);
         console.log("🧠 Modelo usado:", response.model);
 
-      } catch (error) {
-        console.error("❌ Error al llamar al modelo:", error);
-        throw new Error("Error calling the model");
-      }
-
-      // let formattedResults = "";
-      // res.data.items?.forEach((item) => {
-      //   formattedResults += `\n\n**Title:** ${item.snippet?.title}\n\n`;
-      //   formattedResults += `**Description:** ${item.snippet?.description}\n\n`;
-      //   formattedResults += `**Thumbnail:** ![Thumbnail](${item.snippet?.thumbnails?.default?.url})\n\n`;
-      //   formattedResults += `**Channel:** ${item.snippet?.channelTitle}\n\n`;
-      //   formattedResults += `**Published At:** ${item.snippet?.publishedAt}\n\n`;
-      //   formattedResults += `**Link:** [Watch Video](https://www.youtube.com/watch?v=${item.id?.videoId})\n\n`;
-      // });
-
-
+      // } catch (error) {
+      //   console.error("❌ Error al llamar al modelo:", error);
+      //   throw new Error("Error calling the model");
+      // }      
 
       return {
         content: [
