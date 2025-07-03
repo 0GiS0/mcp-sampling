@@ -1,8 +1,8 @@
 {
   "servers": {
     "mcp-sampling": {
-      "type": "http",
-      "url": "http://localhost:3001/mcp",     
+      "type": "sse",
+      "url": "http://localhost:3001/sse",     
     }
     // "mcp-sampling": {
     //   "command": "node",
