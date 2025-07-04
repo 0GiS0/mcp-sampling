@@ -1,52 +1,91 @@
-# Cómo crear un servidor MCP usando Low-Level Server y Streameable HTTP 🚀🖥️✨
+# MCP Sampling Server
 
-Este es un servidor MCP basado en TypeScript que implementa un sistema sencillo de notas. Demuestra conceptos clave de MCP proporcionando:
+A Model Context Protocol (MCP) server that demonstrates proper implementation of LLM sampling capabilities.
 
-- 📄 Recursos que representan notas de texto con URIs y metadatos
-- 🛠️ Herramientas para crear nuevas notas
-- 💡 Prompts para generar resúmenes de notas
+## Problem Solved
 
-## Características 🌟
+This project addresses the common timeout issues encountered when implementing MCP sampling. The key issue was a circular dependency: calling `createMessage` from within an MCP tool handler creates a situation where:
 
-### Recursos 📚
+1. A client calls the MCP tool
+2. The tool tries to call `createMessage` to ask the same client to generate a response
+3. This creates a circular dependency that results in timeouts
 
-- 📑 Lista y accede a notas mediante URIs `note://`
-- 🏷️ Cada nota tiene título, contenido y metadatos
-- 📝 Tipo MIME de texto plano para acceso sencillo al contenido
+## Solution
 
-### Herramientas 🧰
+The solution implements two approaches:
 
-- ✍️ `create_note` - Crea nuevas notas de texto
-  - 🏷️ Requiere título y contenido como parámetros obligatorios
-  - 💾 Almacena la nota en el estado del servidor
+### 1. Simple MCP Tool
+The `summarize` tool now returns a prompt for the client to handle directly, avoiding the circular dependency:
 
-### Prompts 🧠
+```typescript
+return {
+  content: [
+    {
+      type: "text",
+      text: `Please summarize the following text:\n\n${text}`,
+    },
+  ],
+};
+```
 
-- 📝 `summarize_notes` - Genera un resumen de todas las notas almacenadas
-  - 📥 Incluye todos los contenidos de las notas como recursos embebidos
-  - 📤 Devuelve un prompt estructurado para la resumir con LLM
+### 2. Web Interface with Proper Sampling
+A web interface at `http://localhost:3001` allows proper sampling by:
+- Handling sampling requests through HTTP endpoints
+- Calling `createMessage` on the correct server instance
+- Avoiding the circular dependency by separating the tool execution from the sampling request
 
-## Desarrollo 👨‍💻👩‍💻
+## Usage
 
-Instala las dependencias:
-
+### Start the Server
 ```bash
 npm install
-```
-
-Compila el servidor:
-
-```bash
 npm run build
+node build/index.js
 ```
 
-Inicia el servidor:
+### Use the MCP Tool (Recommended)
+Connect your MCP client to `http://localhost:3001/mcp` and use the `summarize` tool.
 
-```bash
-npm start
-```
+**How it works now:**
+- The tool returns a prompt asking you to summarize the text
+- Your MCP client (like Claude Desktop, VSCode, etc.) handles the summarization
+- No circular dependency issues - works reliably!
 
-## Instalación ⚙️
+### Access the Web Interface (Alternative)
+Open `http://localhost:3001` in your browser to test the sampling functionality directly.
+
+**How the web interface works:**
+- Uses HTTP endpoints to handle sampling requests
+- Calls `createMessage` on the correct server instance
+- Demonstrates proper sampling implementation for learning purposes
+
+## Key Architecture Insights
+
+1. **Separation of Concerns**: Keep tool execution separate from sampling requests
+2. **Proper Session Management**: Each MCP session needs its own server instance
+3. **Client Capability Detection**: Check for sampling capabilities before attempting to use them
+4. **Error Handling**: Provide meaningful error messages when sampling isn't available
+
+## Comparison with mcp-webcam
+
+This implementation follows the same pattern as the successful `mcp-webcam` project:
+- Web interface for interactive functionality
+- HTTP endpoints for sampling requests
+- Proper session management
+- Capability detection and error handling
+
+The key difference is that this project focuses on text summarization rather than webcam capture, but the architectural principles are the same.
+
+## Testing
+
+The server provides both:
+- MCP tool functionality (for integration with MCP clients)
+- Web interface functionality (for direct testing and sampling)
+
+You can test the sampling by:
+1. Opening the web interface at `http://localhost:3001`
+2. Entering text in the textarea
+3. Clicking "Summarize Text" to see the sampling in action
 
 Para usar con Claude Desktop, añade la configuración del servidor:
 
