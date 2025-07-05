@@ -2,6 +2,12 @@
   "servers": {
     "mcp-sampling": {
       "type": "http",
-      "url": "http://localhost:3001/mcp"
+      "url": "http://localhost:3001/mcp",
+      "dev": {
+        "watch": "src/**/*.ts",
+        "debug": {
+          "type": "node"
+        }
+      }
     } 
   }
