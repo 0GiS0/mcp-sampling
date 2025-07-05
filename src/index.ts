@@ -52,9 +52,9 @@ const createSummarizeTool = (serverInstance: McpServer) => {
             ],
             maxTokens: 500,
             modelPreferences: {
-              costPriority: 1,
-              intelligencePriority: 0.5,
-              speedPriority: 1,
+              costPriority: 0.5, // Balance cost and performance
+              intelligencePriority: 0.5, // Balance intelligence and performance
+              speedPriority: 0.5, // Prioritize speed
             },
           },
         },
