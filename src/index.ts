@@ -22,6 +22,7 @@ import {
 
 import { randomUUID } from "node:crypto";
 import cors from "cors";
+import compression from "compression";
 
 dotenv.config();
 import { google } from "googleapis";
@@ -67,19 +68,153 @@ interface JSONRPCErrorResponse {
  * Almacenamiento en memoria de videos de YouTube.
  * En una app real, esto sería una base de datos.
  */
-const videos: { [id: string]: YouTubeVideo } = {
-};
+const videos: { [id: string]: YouTubeVideo } = {};
+
+/**
+ * Cache para las búsquedas de YouTube.
+ */
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+  ttl: number;
+}
+
+const searchCache: { [key: string]: CacheEntry } = {};
+const CACHE_TTL = 300000; // 5 minutos
+
+/**
+ * Función para obtener datos del cache.
+ */
+function getFromCache(key: string): any | null {
+  const entry = searchCache[key];
+  if (!entry) return null;
+  
+  if (Date.now() > entry.timestamp + entry.ttl) {
+    delete searchCache[key];
+    return null;
+  }
+  
+  return entry.data;
+}
+
+/**
+ * Función para guardar datos en el cache.
+ */
+function saveToCache(key: string, data: any, ttl: number = CACHE_TTL): void {
+  searchCache[key] = {
+    data,
+    timestamp: Date.now(),
+    ttl
+  };
+}
+
+/**
+ * Función para limpiar el cache de entradas expiradas.
+ */
+function cleanupCache(): void {
+  const now = Date.now();
+  let cleaned = 0;
+  
+  Object.keys(searchCache).forEach(key => {
+    const entry = searchCache[key];
+    if (now > entry.timestamp + entry.ttl) {
+      delete searchCache[key];
+      cleaned++;
+    }
+  });
+  
+  if (cleaned > 0) {
+    console.log(`🧹 Limpiadas ${cleaned} entradas del cache`);
+  }
+}
+
+/**
+ * Simple rate limiting.
+ */
+interface RateLimitEntry {
+  requests: number;
+  windowStart: number;
+}
+
+const rateLimits: { [ip: string]: RateLimitEntry } = {};
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per minute
+
+/**
+ * Función para verificar rate limiting.
+ */
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimits[ip];
+  
+  if (!entry) {
+    rateLimits[ip] = { requests: 1, windowStart: now };
+    return true;
+  }
+  
+  // Reset window if expired
+  if (now - entry.windowStart >= RATE_LIMIT_WINDOW) {
+    rateLimits[ip] = { requests: 1, windowStart: now };
+    return true;
+  }
+  
+  // Check if under limit
+  if (entry.requests < RATE_LIMIT_MAX_REQUESTS) {
+    entry.requests++;
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Función para limpiar entradas de rate limiting expiradas.
+ */
+function cleanupRateLimits(): void {
+  const now = Date.now();
+  let cleaned = 0;
+  
+  Object.keys(rateLimits).forEach(ip => {
+    const entry = rateLimits[ip];
+    if (now - entry.windowStart >= RATE_LIMIT_WINDOW) {
+      delete rateLimits[ip];
+      cleaned++;
+    }
+  });
+  
+  if (cleaned > 0) {
+    console.log(`🧹 Limpiadas ${cleaned} entradas de rate limiting`);
+  }
+}
 
 // 🚀 Inicializa la app Express
 const app = express();
 
 // Configuración de middlewares
+app.use(compression()); // Compresión gzip
+
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
   credentials: true,
 }));
 
 app.use(express.json({ limit: '10mb' }));
+
+// Rate limiting middleware
+app.use((req, res, next) => {
+  const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+  
+  if (!checkRateLimit(clientIP)) {
+    return res.status(429).json(createErrorResponse(
+      -32000,
+      "Too many requests. Please try again later.",
+      null,
+      { retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000) }
+    ));
+  }
+  
+  next();
+});
 
 // Middleware para validar Content-Type en requests POST
 app.use('/mcp', (req, res, next) => {
@@ -218,6 +353,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       console.log(`🔍 Buscando videos de YouTube con query: ${query}`);
 
+      // Check cache first
+      const cacheKey = `search_${query.toLowerCase()}`;
+      const cachedResult = getFromCache(cacheKey);
+      
+      if (cachedResult) {
+        console.log(`💾 Usando resultado del cache para: ${query}`);
+        return cachedResult;
+      }
+
       try {
         const res = await youtube.search.list({
           part: ['snippet'],
@@ -228,7 +372,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
 
         if (!res.data.items || res.data.items.length === 0) {
-          return {
+          const result = {
             content: [
               {
                 type: "text",
@@ -236,6 +380,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               }
             ]
           };
+          
+          // Cache the empty result too
+          saveToCache(cacheKey, result, CACHE_TTL);
+          return result;
         }
 
         // Muestra una tabla más compacta en consola, truncando los textos largos
@@ -300,7 +448,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ).join("\n");
         }
 
-        return {
+        const result = {
           content: [
             {
               type: "text",
@@ -310,6 +458,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           ]
         };
+
+        // Cache the result
+        saveToCache(cacheKey, result, CACHE_TTL);
+        return result;
 
       } catch (error) {
         console.error("❌ Error searching YouTube:", error);
@@ -584,11 +736,18 @@ app.delete("/mcp", async (req: Request, res: Response) => {
  */
 app.get("/health", (req: Request, res: Response) => {
   const activeSessions = Object.keys(transports).length;
+  const cacheEntries = Object.keys(searchCache).length;
+  
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
     activeSessions,
+    cacheEntries,
     uptime: process.uptime(),
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+    },
   });
 });
 
@@ -651,7 +810,7 @@ process.on("unhandledRejection", (reason, promise) => {
   gracefulShutdown("unhandledRejection");
 });
 
-// Limpieza periódica de transports inactivos
+// Limpieza periódica de transports inactivos y cache
 setInterval(() => {
   const now = Date.now();
   let cleanedCount = 0;
@@ -668,4 +827,8 @@ setInterval(() => {
   if (cleanedCount > 0) {
     console.log(`🧹 Limpiados ${cleanedCount} transports inactivos`);
   }
+  
+  // Limpiar cache y rate limits también
+  cleanupCache();
+  cleanupRateLimits();
 }, 300000); // Cada 5 minutos

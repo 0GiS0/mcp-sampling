@@ -8,6 +8,34 @@ Este es un servidor MCP basado en TypeScript que implementa un sistema sencillo 
 
 ## Características 🌟
 
+### Mejoras Implementadas 🚀
+
+#### Robustez y Confiabilidad
+- ✅ **Manejo de errores mejorado**: Validación completa de entrada y manejo de errores estructurado
+- ✅ **Validación de sesiones**: Verificación de formato UUID para session IDs
+- ✅ **Limpieza automática**: Limpieza periódica de transports inactivos y cache
+- ✅ **Apagado graceful**: Manejo seguro de señales de cierre del servidor
+
+#### Rendimiento y Escalabilidad
+- ⚡ **Cache inteligente**: Sistema de cache con TTL para búsquedas de YouTube
+- ⚡ **Compresión gzip**: Reducción automática del tamaño de respuestas
+- ⚡ **Rate limiting**: Protección contra abuso con límites por IP
+- ⚡ **Optimización de memoria**: Monitoreo y gestión de memoria
+
+#### Seguridad
+- 🔒 **CORS configurado**: Control de orígenes permitidos
+- 🔒 **Validación de Content-Type**: Verificación de tipos de contenido
+- 🔒 **Sanitización de entrada**: Validación y limpieza de datos de entrada
+- 🔒 **Timeouts configurados**: Prevención de requests colgados
+
+#### Observabilidad
+- 📊 **Health check endpoint**: Monitoreo de estado del servidor en `/health`
+- 📊 **Métricas detalladas**: Información sobre sesiones, cache y memoria
+- 📊 **Logging estructurado**: Registros consistentes y útiles para debugging
+- 📊 **Manejo de errores no capturados**: Prevención de crashes inesperados
+
+### Características Originales
+
 ### Recursos 📚
 
 - 📑 Lista y accede a notas mediante URIs `note://`
