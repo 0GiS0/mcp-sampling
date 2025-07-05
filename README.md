@@ -1,12 +1,12 @@
-# Servidor de Sampling MCP
+# 🎯 Servidor de Sampling MCP
 
 Un servidor Model Context Protocol (MCP) que demuestra la implementación correcta de capacidades de sampling con LLMs.
 
-## ¿Cómo funciona el Sampling en MCP?
+## 🤔 ¿Cómo funciona el Sampling en MCP?
 
 El *sampling* en MCP es una característica poderosa que permite que las herramientas MCP soliciten al cliente que genere contenido usando sus propios modelos LLM. En lugar de que el servidor MCP tenga que integrar directamente con proveedores de IA, delega esta responsabilidad al cliente.
 
-### Flujo completo del Sampling
+### 🔄 Flujo completo del Sampling
 
 El proceso de sampling en MCP sigue este flujo:
 
@@ -16,14 +16,14 @@ El proceso de sampling en MCP sigue este flujo:
 4. **El cliente devuelve el contenido generado** a la herramienta MCP.
 5. **La herramienta procesa la respuesta** y la devuelve al cliente original.
 
-### Ventajas del Sampling
+### ⭐ Ventajas del Sampling
 
 - **Sin dependencias externas**: El servidor MCP no necesita API keys ni integraciones con proveedores de IA.
 - **Flexibilidad del cliente**: El cliente puede elegir el modelo LLM más adecuado para cada tarea.
 - **Eficiencia**: Evita llamadas redundantes a APIs externas.
 - **Seguridad**: Las credenciales y configuraciones del LLM permanecen en el cliente.
 
-### Ejemplo práctico
+### 💡 Ejemplo práctico
 
 ```typescript
 const result = await extra.sendRequest(
@@ -51,7 +51,7 @@ const result = await extra.sendRequest(
 );
 ```
 
-### Implementación correcta del Sampling
+### 🔧 Implementación correcta del Sampling
 
 A diferencia de implementaciones incorrectas que podrían causar dependencias circulares, la implementación correcta utiliza el método `sampling/createMessage` a través de `extra.sendRequest`. Este es el patrón recomendado por MCP:
 
@@ -107,25 +107,25 @@ return {
 };
 ```
 
-### ¿Por qué funciona la implementación correcta?
+### ❓ ¿Por qué funciona la implementación correcta?
 
 1. **Separación clara de responsabilidades**: La herramienta solicita el sampling, el cliente lo ejecuta.
 2. **Flujo unidireccional**: No hay ciclos en la comunicación.
 3. **API estándar**: Utiliza el protocolo MCP oficial para sampling.
 4. **Gestión de sesiones**: Cada sesión mantiene su contexto independiente.
 
-## Arquitectura HTTP Streamable
+## 🏗️ Arquitectura HTTP Streamable
 
 Este servidor implementa MCP usando **StreamableHTTPServerTransport**, que ofrece ventajas significativas sobre otros transportes:
 
-### Características del transporte HTTP
+### 🚀 Características del transporte HTTP
 
 - **Conexiones persistentes**: Mantiene sesiones a través de múltiples solicitudes HTTP.
 - **Server-Sent Events (SSE)**: Permite notificaciones del servidor al cliente.
 - **Gestión de sesiones**: Cada cliente MCP tiene su propia sesión aislada.
 - **Escalabilidad**: Puede manejar múltiples clientes simultáneamente.
 
-### Flujo de sesión HTTP
+### 🌊 Flujo de sesión HTTP
 
 ```
 1. POST /mcp (initialize) → Crea nueva sesión
@@ -134,7 +134,7 @@ Este servidor implementa MCP usando **StreamableHTTPServerTransport**, que ofrec
 4. DELETE /mcp (con mcp-session-id) → Termina sesión
 ```
 
-### Gestión de sesiones
+### 🎪 Gestión de sesiones
 
 ```typescript
 // Mapa de sesiones activas
@@ -160,16 +160,16 @@ server = new McpServer(
 );
 ```
 
-## Resumen de la arquitectura
+## 📋 Resumen de la arquitectura
 
-### Componentes principales
+### 🧩 Componentes principales
 
 - **McpServer**: Instancia del servidor MCP que gestiona herramientas y capacidades.
 - **StreamableHTTPServerTransport**: Transporte HTTP que maneja conexiones y sesiones.
 - **Express.js**: Servidor web que expone los endpoints HTTP.
 - **Gestión de sesiones**: Mapeo de session IDs a instancias de servidor.
 
-### Principios de diseño
+### 🎯 Principios de diseño
 
 - **Separación de responsabilidades**: 
   - La herramienta construye solicitudes de sampling
@@ -190,7 +190,7 @@ server = new McpServer(
   - Respuestas HTTP apropiadas para errores
   - Logging detallado para debugging
 
-### Flujo de datos
+### 📊 Flujo de datos
 
 ```
 Cliente MCP → HTTP POST → Express.js → StreamableHTTPServerTransport → McpServer → Herramienta
@@ -198,9 +198,9 @@ Cliente MCP → HTTP POST → Express.js → StreamableHTTPServerTransport → M
       ← HTTP Response ← Express.js ← StreamableHTTPServerTransport ← McpServer ← sampling/createMessage
 ```
 
-## Uso
+## 🚀 Uso
 
-### Iniciar el servidor
+### 🔧 Iniciar el servidor
 
 ```bash
 npm install
@@ -208,16 +208,16 @@ npm run build
 node build/index.js
 ```
 
-### Usar la herramienta MCP
+### 🛠️ Usar la herramienta MCP
 
 Conecta tu cliente MCP a `http://localhost:3001/mcp` y usa la herramienta `summarize`.  
 El cliente recibirá un *prompt* y realizará el sampling correctamente, sin ciclos.
 
-### Interfaz web (opcional)
+### 🌐 Interfaz web (opcional)
 
 Abre `http://localhost:3001` en tu navegador para probar el sampling directamente.
 
-## Ejemplo de configuración para Claude Desktop
+## 🖥️ Ejemplo de configuración para Claude Desktop
 
 En MacOS: `~/Library/Application Support/Claude/claude_desktop_config.json`  
 En Windows: `%APPDATA%/Claude/claude_desktop_config.json`
@@ -233,9 +233,9 @@ En Windows: `%APPDATA%/Claude/claude_desktop_config.json`
 }
 ```
 
-## Depuración y Monitoreo
+## 🔍 Depuración y Monitoreo
 
-### Logging detallado
+### 📝 Logging detallado
 
 El servidor incluye logging exhaustivo para facilitar el debugging:
 
@@ -257,9 +257,9 @@ console.log("♻️ [MCP] MCP request received for existing session:", sessionId
 console.log("🔗 [MCP] Session initialized:", sessionId);
 ```
 
-### Herramientas de depuración
+### 🔧 Herramientas de depuración
 
-#### MCP Inspector
+#### 🕵️ MCP Inspector
 
 Recomendamos usar el [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 
@@ -269,7 +269,7 @@ npm run inspector
 
 El Inspector te dará una URL para acceder a herramientas de depuración en tu navegador.
 
-#### Verificación de sesiones
+#### 📊 Verificación de sesiones
 
 ```bash
 # Verificar sesiones activas
@@ -284,23 +284,23 @@ curl -H "Content-Type: application/json" \
      http://localhost:3001/mcp
 ```
 
-### Solución de problemas comunes
+### 🚨 Solución de problemas comunes
 
-#### Error: "Invalid or missing session ID"
+#### ⚠️ Error: "Invalid or missing session ID"
 
 ```bash
 # Causa: Solicitud sin session ID válido
 # Solución: Asegurar que la inicialización se haga primero
 ```
 
-#### Error: Timeout en sampling
+#### ⏰ Error: Timeout en sampling
 
 ```bash
 # Causa: Cliente no soporta sampling
 # Solución: Verificar capacidades del cliente
 ```
 
-#### Error: "Connection refused"
+#### 🔌 Error: "Connection refused"
 
 ```bash
 # Causa: Servidor no está corriendo
@@ -308,9 +308,9 @@ curl -H "Content-Type: application/json" \
 netstat -an | grep 3001
 ```
 
-## Ejemplos prácticos
+## 💡 Ejemplos prácticos
 
-### Ejemplo 1: Uso básico con curl
+### 🌟 Ejemplo 1: Uso básico con curl
 
 ```bash
 # 1. Inicializar sesión
@@ -344,7 +344,7 @@ curl -X POST http://localhost:3001/mcp \
   }'
 ```
 
-### Ejemplo 2: Integración con Claude Desktop
+### 🤖 Ejemplo 2: Integración con Claude Desktop
 
 1. **Configurar Claude Desktop**:
    ```json
@@ -364,7 +364,7 @@ curl -X POST http://localhost:3001/mcp \
    [texto del artículo]
    ```
 
-### Ejemplo 3: Monitoreo de sesiones
+### 📈 Ejemplo 3: Monitoreo de sesiones
 
 ```typescript
 // Verificar sesiones activas
@@ -376,7 +376,7 @@ console.log("Transporte:", sessionInfo.transport);
 console.log("Servidor:", sessionInfo.server);
 ```
 
-### Ejemplo 4: Personalización de herramientas
+### 🎨 Ejemplo 4: Personalización de herramientas
 
 ```typescript
 // Crear herramienta personalizada
@@ -412,9 +412,9 @@ const createCustomTool = (serverInstance: McpServer) => {
 };
 ```
 
-## Validación y Testing
+## 🧪 Validación y Testing
 
-### Verificar funcionamiento del servidor
+### ✅ Verificar funcionamiento del servidor
 
 ```bash
 # 1. Construir y ejecutar el servidor
@@ -431,7 +431,7 @@ curl -X POST http://localhost:3001/mcp \
   -d '{"jsonrpc":"2.0","method":"initialize","params":{"capabilities":{"sampling":{}}},"id":1}'
 ```
 
-### Validar capacidades de sampling
+### 🔬 Validar capacidades de sampling
 
 ```bash
 # Verificar que el servidor declara capacidades de sampling
@@ -449,7 +449,7 @@ curl -X POST http://localhost:3001/mcp \
   }' | jq '.result.capabilities'
 ```
 
-### Testing con MCP Inspector
+### 🔎 Testing con MCP Inspector
 
 ```bash
 # Instalar y ejecutar el inspector
@@ -457,7 +457,7 @@ npm install -g @modelcontextprotocol/inspector
 mcp-inspector build/index.js
 ```
 
-### Validar herramientas disponibles
+### 🔍 Validar herramientas disponibles
 
 ```bash
 # Listar herramientas disponibles
@@ -471,9 +471,9 @@ curl -X POST http://localhost:3001/mcp \
   }' | jq '.result.tools'
 ```
 
-## Mejores prácticas
+## ⭐ Mejores prácticas
 
-### Para desarrolladores de herramientas MCP
+### 👨‍💻 Para desarrolladores de herramientas MCP
 
 1. **Siempre verificar capacidades**:
    ```typescript
@@ -498,7 +498,7 @@ curl -X POST http://localhost:3001/mcp \
    const prompt = `Please summarize concisely (max 3 sentences):\n\n${text}`;
    ```
 
-### Para administradores de servidor
+### 🏗️ Para administradores de servidor
 
 1. **Configurar logging apropiado**:
    ```typescript
@@ -522,7 +522,7 @@ curl -X POST http://localhost:3001/mcp \
    ps aux | grep node
    ```
 
-## Conclusión
+## 🎯 Conclusión
 
 Este servidor MCP demuestra la implementación correcta de sampling usando HTTP transport streamable. Las características clave incluyen:
 
