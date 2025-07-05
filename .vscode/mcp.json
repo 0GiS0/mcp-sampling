@@ -3,11 +3,5 @@
     "mcp-sampling": {
       "type": "http",
       "url": "http://localhost:3001/mcp"
-    }
-    // "mcp-sampling": {
-    //   "command": "node",
-    //   "args": [
-    //     "./build/index.js"
-    //   ],
-    // }
+    } 
   }

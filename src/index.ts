@@ -5,14 +5,15 @@ import express, { RequestHandler } from "express";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { randomUUID } from "crypto";
 
-
 const PORT = process.env.PORT || 3001;
 
 // Map to store transports and their associated servers by session ID
-const sessions: { [sessionId: string]: { 
-  transport: StreamableHTTPServerTransport; 
-  server: McpServer;
-} } = {};
+const sessions: {
+  [sessionId: string]: {
+    transport: StreamableHTTPServerTransport;
+    server: McpServer;
+  };
+} = {};
 
 // Tool that provides text for summarization (but doesn't call createMessage)
 const createSummarizeTool = (serverInstance: McpServer) => {
@@ -46,7 +47,7 @@ async function processSamplingRequest(
 ): Promise<any> {
   // Find a server instance with sampling capabilities
   let samplingServer = null;
-  
+
   if (sessionId && sessions[sessionId]) {
     // Use specific session if provided
     const session = sessions[sessionId];
@@ -60,7 +61,8 @@ async function processSamplingRequest(
     // Look through all active sessions to find one with sampling capabilities
     for (const session of Object.values(sessions)) {
       if (session.server && session.server.server) {
-        const clientCapabilities = session.server.server.getClientCapabilities();
+        const clientCapabilities =
+          session.server.server.getClientCapabilities();
         if (clientCapabilities?.sampling) {
           samplingServer = session.server.server;
           break;
@@ -70,7 +72,9 @@ async function processSamplingRequest(
   }
 
   if (!samplingServer) {
-    throw new Error("No client with sampling capabilities is currently connected");
+    throw new Error(
+      "No client with sampling capabilities is currently connected"
+    );
   }
 
   try {
@@ -86,6 +90,11 @@ async function processSamplingRequest(
         },
       ],
       maxTokens: 500,
+      modelPreferences: {
+        costPriority: 0.5,
+        intelligencePriority: 0.5,
+        speedPriority: 0.5,
+      },
     });
 
     return response;
