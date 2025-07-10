@@ -2,7 +2,7 @@
 
 ¡Hola developer 👋🏻! En este repositorio tienes un ejemplo de cómo funciona el Sampling en Model Context Protocol. Para que puedas entender perfectamente cómo puedes usarlo y qué te aporta dentro de tus MCP Servers. Si quieres verlo en acción, aquí tienes el vídeo relacionado con este repo:
 
-[![YouTube Video](https://img.youtube.com/vi/2b1d3k0g4aY/0.jpg)](https://www.youtube.com/watch?v=2b1d3k0g4aY)
+<img width="1280" height="720" alt="Qué es el sampling en model context protocol" src="https://github.com/user-attachments/assets/1a8b25f6-8234-471d-8ea3-17c622ac7ce6" />
 
 ## 🤔 ¿Cómo funciona el Sampling en MCP?
 
