@@ -11,7 +11,7 @@
     "inspector": "npx @modelcontextprotocol/inspector build/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.15.0",
+    "@modelcontextprotocol/sdk": "1.16.0",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
     "googleapis": "^150.0.1"
