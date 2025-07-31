@@ -1,5 +1,7 @@
 # 🎯 Cómo funciona la funcionalidad Sampling en Model Context Protocol
 
+> 🌐 **Idiomas disponibles** / **Available Languages**: [🇪🇸 Español](README.md) | [🇺🇸 English](README.en.md)
+
 ¡Hola developer 👋🏻! En este repositorio tienes un ejemplo de cómo funciona el Sampling en Model Context Protocol. Para que puedas entender perfectamente cómo puedes usarlo y qué te aporta dentro de tus MCP Servers. Si quieres verlo en acción, aquí tienes el vídeo relacionado con este repo:
 
 [![Qué es el sampling en model context protocol](https://github.com/user-attachments/assets/1a8b25f6-8234-471d-8ea3-17c622ac7ce6)](https://youtu.be/7LARYKzChMQ)
