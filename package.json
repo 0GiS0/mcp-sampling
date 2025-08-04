@@ -14,7 +14,7 @@
     "@modelcontextprotocol/sdk": "1.15.0",
     "dotenv": "^17.0.1",
     "express": "^5.1.0",
-    "googleapis": "^150.0.1"
+    "googleapis": "^154.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
